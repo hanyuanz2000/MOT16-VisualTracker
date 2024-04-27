@@ -65,6 +65,12 @@ class Evaluator:
             # Get dataset info about what to evaluate
             output_res[dataset_name] = {}
             output_msg[dataset_name] = {}
+            
+            # It is a method in base class Dataset, returns tracker_list, seq_list, class_list
+            # example: 
+            # tracker_list = ['MPNTrack'], 
+            # seq_list = {'MOT16-02': 600, 'MOT16-04': 1050, 'MOT16-05': 837}
+            # class_list = ['pedestrian']
             tracker_list, seq_list, class_list = dataset.get_eval_info()
             print('\nEvaluating %i tracker(s) on %i sequence(s) for %i class(es) on %s dataset using the following '
                   'metrics: %s\n' % (len(tracker_list), len(seq_list), len(class_list), dataset_name,
@@ -109,9 +115,12 @@ class Evaluator:
                                 res[curr_seq] = eval_sequence(curr_seq, dataset, tracker, class_list, metrics_list,
                                                               metric_names)
                         else:
+                            # This is what we use actually. handle sequence one by one
                             for curr_seq in sorted(seq_list):
                                 res[curr_seq] = eval_sequence(curr_seq, dataset, tracker, class_list, metrics_list,
                                                               metric_names)
+                                # e.g curr_seq = 'MOT16-02', dataset = MotChallenge2DBox, 
+                                # tracker = 'MPNTrack', class_list = ['pedestrian'], metrics_list = [HOTA, CLEAR, Identity], metric_names = ['HOTA', 'CLEAR', 'Identity']
 
                     # Combine results over all sequences and then over all classes
 
@@ -216,8 +225,11 @@ def eval_sequence(seq, dataset, tracker, class_list, metrics_list, metric_names)
     """Function for evaluating a single sequence"""
 
     raw_data = dataset.get_raw_seq_data(tracker, seq)
+    # a method defined in base class Dataset
+    
+    
     seq_res = {}
-    for cls in class_list:
+    for cls in class_list: # e.g ['pedestrian']
         seq_res[cls] = {}
         data = dataset.get_preprocessed_seq_data(raw_data, cls)
         for metric, met_name in zip(metrics_list, metric_names):

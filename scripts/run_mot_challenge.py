@@ -43,13 +43,21 @@ import trackeval  # noqa: E402
 
 if __name__ == '__main__':
     freeze_support()
-
     # Command line interface:
+    # 1. configs including parallel executions, error handling, etc
     default_eval_config = trackeval.Evaluator.get_default_eval_config()
     default_eval_config['DISPLAY_LESS_PROGRESS'] = False
+
+    # 2. configs include GT data, tracker data, benchmark, SPLIT_TO_EVAL, etc
     default_dataset_config = trackeval.datasets.MotChallenge2DBox.get_default_dataset_config()
+
+    # 3. configs include metrics, thresholds, etc
     default_metrics_config = {'METRICS': ['HOTA', 'CLEAR', 'Identity'], 'THRESHOLD': 0.5}
-    config = {**default_eval_config, **default_dataset_config, **default_metrics_config}  # Merge default configs
+
+     # Merge default configs
+    config = {**default_eval_config, **default_dataset_config, **default_metrics_config}
+    
+    # update config with command line arguments
     parser = argparse.ArgumentParser()
     for setting in config.keys():
         if type(config[setting]) == list or type(config[setting]) == type(None):
@@ -71,6 +79,7 @@ if __name__ == '__main__':
             elif type(args[setting]) == type(None):
                 x = None
             elif setting == 'SEQ_INFO':
+                # e.g --SEQ_INFO 'MOT16-02' 'MOT16-04' -> {'MOT16-02': None, 'MOT16-04': None}
                 x = dict(zip(args[setting], [None]*len(args[setting])))
             else:
                 x = args[setting]
@@ -88,4 +97,15 @@ if __name__ == '__main__':
             metrics_list.append(metric(metrics_config))
     if len(metrics_list) == 0:
         raise Exception('No metrics selected for evaluation')
+    
+    # performs a comprehensive evaluation of multiple object trackers across specified datasets and metrics
+    # The method receives a list of datasets (dataset_list) and a list of metric classes (metrics_list). \
+    # Each dataset corresponds to a different set of tracking data to be evaluated \
+    # (e.g., different MOT challenges like MOT17), 
+    # and each metric class is used to calculate specific evaluation criteria (e.g., HOTA, CLEAR).
     evaluator.evaluate(dataset_list, metrics_list)
+    # The method receives a list of datasets (dataset_list) 
+    # and a list of metric classes (metrics_list). 
+    # Each dataset corresponds to a different set of tracking data to be evaluated 
+    # (e.g., different MOT challenges like MOT17), 
+    # and each metric class is used to calculate specific evaluation criteria (e.g., HOTA, CLEAR).

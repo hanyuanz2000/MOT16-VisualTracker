@@ -131,10 +131,10 @@ class MotChallenge2DBox(_BaseDataset):
     def _get_seq_info(self):
         seq_list = []
         seq_lengths = {}
+        # an example of seq_info: {'MOT16-02': 600, 'MOT16-04': 1050, 'MOT16-05': 837}
         if self.config["SEQ_INFO"]:
             seq_list = list(self.config["SEQ_INFO"].keys())
             seq_lengths = self.config["SEQ_INFO"]
-
             # If sequence length is 'None' tries to read sequence length from .ini files.
             for seq, seq_length in seq_lengths.items():
                 if seq_length is None:
@@ -146,6 +146,7 @@ class MotChallenge2DBox(_BaseDataset):
                     seq_lengths[seq] = int(ini_data['Sequence']['seqLength'])
 
         else:
+            # since we only evaluate on train set, 'SEQMAP_FILE' is not used and "SEQ_INFO" is enough
             if self.config["SEQMAP_FILE"]:
                 seqmap_file = self.config["SEQMAP_FILE"]
             else:
@@ -173,15 +174,16 @@ class MotChallenge2DBox(_BaseDataset):
 
     def _load_raw_file(self, tracker, seq, is_gt):
         """Load a file (gt or tracker) in the MOT Challenge 2D box format
+        Handles both the data format and any exceptions or errors that might arise due to the data's structure or content
 
         If is_gt, this returns a dict which contains the fields:
         [gt_ids, gt_classes] : list (for each timestep) of 1D NDArrays (for each det).
-        [gt_dets, gt_crowd_ignore_regions]: list (for each timestep) of lists of detections.
+        [gt_dets, gt_crowd_ignore_regions]: list (for each timestep) of lists of detections. dets: Lists of bounding box coordinates for each detection
         [gt_extras] : list (for each timestep) of dicts (for each extra) of 1D NDArrays (for each det).
 
         if not is_gt, this returns a dict which contains the fields:
         [tracker_ids, tracker_classes, tracker_confidences] : list (for each timestep) of 1D NDArrays (for each det).
-        [tracker_dets]: list (for each timestep) of lists of detections.
+        [tracker_dets]: list (for each timestep) of lists of detections. dets: Lists of bounding box coordinates for each detection
         """
         # File location
         if self.data_is_zipped:
@@ -201,13 +203,16 @@ class MotChallenge2DBox(_BaseDataset):
         read_data, ignore_data = self._load_simple_text_file(file, is_zipped=self.data_is_zipped, zip_file=zip_file)
 
         # Convert data to required format
-        num_timesteps = self.seq_lengths[seq]
+        num_timesteps = self.seq_lengths[seq] 
+        # e.g self.seq_lengths = {'MOT16-02': 600, 'MOT16-04': 1050, 'MOT16-05': 837} -> num_timesteps = 600
+
         data_keys = ['ids', 'classes', 'dets']
         if is_gt:
             data_keys += ['gt_crowd_ignore_regions', 'gt_extras']
         else:
             data_keys += ['tracker_confidences']
         raw_data = {key: [None] * num_timesteps for key in data_keys}
+        # e.g raw_data = {'ids': [None, None, None, ..., None], 'classes': [None, None, None, ..., None], 'dets': [None, None, None, ..., None], 'gt_crowd_ignore_regions': [None, None, None, ..., None], 'gt_extras': [None, None, None, ..., None]}
 
         # Check for any extra time keys
         current_time_keys = [str( t+ 1) for t in range(num_timesteps)]
