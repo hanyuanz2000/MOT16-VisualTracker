@@ -201,6 +201,8 @@ class MotChallenge2DBox(_BaseDataset):
 
         # Load raw data from text file
         read_data, ignore_data = self._load_simple_text_file(file, is_zipped=self.data_is_zipped, zip_file=zip_file)
+        # read_data is a dict, with keys as time steps and values as list of detections for that time step
+        # check the end of _load_simple_text_file() in _base_dataset.py for more details
 
         # Convert data to required format
         num_timesteps = self.seq_lengths[seq] 
@@ -290,6 +292,36 @@ class MotChallenge2DBox(_BaseDataset):
         raw_data['num_timesteps'] = num_timesteps
         raw_data['seq'] = seq
         return raw_data
+        '''
+        raw_data is a dic with different keys, each key have a list of values, each value is a numpy array, 
+        representing the data for a timestep. For instance, np.array([1, 2]) as the first element of 'tracker_ids' means
+        that the first tracker detection at timestep 0 has id 1 and the second tracker detection has id 2.
+        example of raw_data:
+        {
+            'tracker_ids': [
+                np.array([1, 2]),
+                np.array([1, 3]),
+                np.array([2, 4])
+            ],
+            'tracker_classes': [
+                np.array([1, 1]),  # Assuming tracker also classifies detections
+                np.array([1, 1]),
+                np.array([1, 1])
+            ],
+            'tracker_dets': [
+                np.array([[101, 151, 50, 60], [201, 251, 50, 60]]),
+                np.array([[103, 153, 50, 60], [211, 261, 50, 60]]),
+                np.array([[106, 156, 50, 60], [221, 271, 50, 60]])
+            ],
+            'tracker_confidences': [
+                np.array([0.95, 0.9]),  # Confidence scores for each detection
+                np.array([0.96, 0.92]),
+                np.array([0.97, 0.93])
+            ],
+            'num_timesteps': 3,
+            'seq': 'MOT16-02'
+        }
+        '''
 
     @_timing.time
     def get_preprocessed_seq_data(self, raw_data, cls):

@@ -100,6 +100,39 @@ class _BaseDataset(ABC):
             similarity_scores.append(ious)
         raw_data['similarity_scores'] = similarity_scores
         return raw_data
+    '''
+    raw_data combines the raw data from the tracker and ground-truth data for a single tracker on a single sequence.
+    raw_data includes all of the information needed for both preprocessing and evaluation, for all classes.
+    for each key, each element in the list represents the data for a single timestep, 
+    each element in the array represents the data for a single detection. 
+    For instance, 'gt_ids': [np.array([1, 2, 3]), np.array([1, 2, 3])]
+    means that the first timestep has 3 ground-truth detections with IDs 1, 2, and 3,
+    and the second timestep has 3 ground-truth detections with IDs 1, 2, and 3.
+
+    example of raw_data:
+    raw_dat = {
+        'num_timesteps': 2,
+        'gt_ids': [np.array([1, 2, 3]), np.array([1, 2, 3])],
+        'tracker_ids': [np.array([1, 2, 3]), np.array([1, 2, 3])],
+        'gt_classes': [np.array([7, 1, 2]), np.array([7, 1, 2])],
+        'tracker_classes': [np.array([7, 1, 2]), np.array([7, 1, 2])],
+        'tracker_confidences': [np.array([1.0, 1.0, 1.0]), np.array([1.0, 1.0, 1.0])],
+        'gt_dets': [
+            np.array([[912, 484, 97, 109], [1338, 418, 167, 379], [1400, 420, 160, 370]]),
+            np.array([[912, 484, 97, 109], [1338, 418, 167, 379], [1400, 420, 160, 370]])
+        ],
+        'tracker_dets': [
+            np.array([[912, 484, 97, 109], [1338, 418, 167, 379], [1400, 420, 160, 370]]),
+            np.array([[912, 484, 97, 109], [1338, 418, 167, 379], [1400, 420, 160, 370]])
+        ],
+        'gt_crowd_ignore_regions': [np.array([]), np.array([])],
+        'gt_extras': {'zero_marked': [np.array([0, 1, 1]), np.array([0, 1, 1])]},
+        'similarity_scores': [
+            np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]), 
+            np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+        ]
+    }
+    '''
 
     @staticmethod
     def _load_simple_text_file(file, time_col=0, id_col=None, remove_negative_ids=False, valid_filter=None,
@@ -210,6 +243,23 @@ class _BaseDataset(ABC):
                 'File %s cannot be read because it is either not present or invalidly formatted' % os.path.basename(
                     file))
         return read_data, crowd_ignore_data
+        '''
+        read_data is organized with keys representing each timestep and values as lists of lists, 
+        where each sublist represents a single object detection
+        example:
+        read_data = {
+            '1': [
+                ['1', '1', '912', '484', '97', '109', '0', '7', '1'],
+                ['2', '2', '1338', '418', '167', '379', '1', '1', '1'],
+                ['3', '3', '1400', '420', '160', '370', '1', '2', '1']
+            ],
+            '2': [
+                ['1', '1', '912', '484', '97', '109', '0', '7', '1'],
+                ['2', '2', '1338', '418', '167', '379', '1', '1', '1'],
+                ['3', '3', '1400', '420', '160', '370', '1', '2', '1']
+            ]
+        }
+        '''
 
     @staticmethod
     def _calculate_mask_ious(masks1, masks2, is_encoded=False, do_ioa=False):
