@@ -104,8 +104,3 @@ if __name__ == '__main__':
     # (e.g., different MOT challenges like MOT17), 
     # and each metric class is used to calculate specific evaluation criteria (e.g., HOTA, CLEAR).
     evaluator.evaluate(dataset_list, metrics_list)
-    # The method receives a list of datasets (dataset_list) 
-    # and a list of metric classes (metrics_list). 
-    # Each dataset corresponds to a different set of tracking data to be evaluated 
-    # (e.g., different MOT challenges like MOT17), 
-    # and each metric class is used to calculate specific evaluation criteria (e.g., HOTA, CLEAR).

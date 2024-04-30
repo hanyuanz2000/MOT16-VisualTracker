@@ -1,37 +1,5 @@
-""" run_mot_challenge_chunk.py
-
-Run example:
-run_mot_challenge.py --USE_PARALLEL False --METRICS Hota --TRACKERS_TO_EVAL Lif_T
-
-Command Line Arguments: Defaults, # Comments
-    Eval arguments:
-        'USE_PARALLEL': False,
-        'NUM_PARALLEL_CORES': 8,
-        'BREAK_ON_ERROR': True,
-        'PRINT_RESULTS': True,
-        'PRINT_ONLY_COMBINED': False,
-        'PRINT_CONFIG': True,
-        'TIME_PROGRESS': True,
-        'OUTPUT_SUMMARY': True,
-        'OUTPUT_DETAILED': True,
-        'PLOT_CURVES': True,
-    Dataset arguments:
-        'GT_FOLDER': os.path.join(code_path, 'data/gt/mot_challenge/'),  # Location of GT data
-        'TRACKERS_FOLDER': os.path.join(code_path, 'data/trackers/mot_challenge/'),  # Trackers location
-        'OUTPUT_FOLDER': None,  # Where to save eval results (if None, same as TRACKERS_FOLDER)
-        'TRACKERS_TO_EVAL': None,  # Filenames of trackers to eval (if None, all in folder)
-        'CLASSES_TO_EVAL': ['pedestrian'],  # Valid: ['pedestrian']
-        'BENCHMARK': 'MOT17',  # Valid: 'MOT17', 'MOT16', 'MOT20', 'MOT15'
-        'SPLIT_TO_EVAL': 'train',  # Valid: 'train', 'test', 'all'
-        'INPUT_AS_ZIP': False,  # Whether tracker input files are zipped
-        'PRINT_CONFIG': True,  # Whether to print current config
-        'DO_PREPROC': True,  # Whether to perform preprocessing (never done for 2D_MOT_2015)
-        'TRACKER_SUB_FOLDER': 'data',  # Tracker files are in TRACKER_FOLDER/tracker_name/TRACKER_SUB_FOLDER
-        'OUTPUT_SUB_FOLDER': '',  # Output files are saved in OUTPUT_FOLDER/tracker_name/OUTPUT_SUB_FOLDER
-    Metric arguments:
-        'METRICS': ['HOTA', 'CLEAR', 'Identity', 'VACE']
-"""
-
+from flask import Flask, request, make_response, send_file, jsonify, render_template
+from flask_cors import CORS
 import sys
 import os
 import argparse
@@ -40,10 +8,10 @@ import shutil
 import tempfile
 import configparser
 import json
-import pandas as pd
+import trackeval 
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import trackeval  # noqa: E402
+app = Flask(__name__)
+CORS(app)
 
 # Function to filter frames in a given file
 def filter_frames(input_file, t0, t1):
@@ -67,10 +35,9 @@ def filter_frames(input_file, t0, t1):
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-if __name__ == '__main__':
-    freeze_support()
-    # Command line interface:
-    # 1. configs including parallel executions, error handling, etc
+@app.route('/run_evaluation', methods=['POST'])
+def run_evaluation():
+    # default config
     default_eval_config = trackeval.Evaluator.get_default_eval_config()
     default_eval_config['DISPLAY_LESS_PROGRESS'] = False
 
@@ -83,44 +50,45 @@ if __name__ == '__main__':
      # Merge default configs
     config = {**default_eval_config, **default_dataset_config, **default_metrics_config}
     
-    # update config with command line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--t0", type=int, help="Starting frame number")
-    parser.add_argument("--t1", type=int, help="Ending frame number")
-
-    for setting in config.keys():
-        if type(config[setting]) == list or type(config[setting]) == type(None):
-            parser.add_argument("--" + setting, nargs='+')
-        else:
-            parser.add_argument("--" + setting)
+    # Basic Argument
+    BENCHMARK = 'MOT16'
+    SPLIT_TO_EVAL = 'train'
+    TRACKERS_TO_EVAL = ['MPNTrack']
+    METRICS = ['HOTA', 'CLEAR', 'Identity', 'VACE']
+    USE_PARALLEL = False
+    NUM_PARALLEL_CORES = 1
     
-    args = parser.parse_args().__dict__
-    
-    # get t0 and t1 if provided
-    t0, t1 = args.pop('t0', None), args.pop('t1', None)
+    # Extract parameters from the request data
+    data = request.get_json()
+    t0 = data.get('t0')
+    t1 = data.get('t1')
+    # txt_file = data.get('txt_file')
+    SEQ_INFO = data.get('SEQ_INFO')
+    SEQ_INFO = {SEQ_INFO: None}
 
-    for setting in args.keys():
-        if args[setting] is not None:
-            if type(config[setting]) == type(True):
-                if args[setting] == 'True':
-                    x = True
-                elif args[setting] == 'False':
-                    x = False
-                else:
-                    raise Exception('Command line parameter ' + setting + 'must be True or False')
-            elif type(config[setting]) == type(1):
-                x = int(args[setting])
-            elif type(args[setting]) == type(None):
-                x = None
-            elif setting == 'SEQ_INFO':
-                # e.g --SEQ_INFO 'MOT16-02' 'MOT16-04' -> {'MOT16-02': None, 'MOT16-04': None}
-                x = dict(zip(args[setting], [None]*len(args[setting])))
-            else:
-                x = args[setting]
-            config[setting] = x
+    arg_dic = {'BENCHMARK': BENCHMARK, 'SPLIT_TO_EVAL': SPLIT_TO_EVAL, 'TRACKERS_TO_EVAL': TRACKERS_TO_EVAL,
+     'METRICS': METRICS, 'USE_PARALLEL': USE_PARALLEL, 'NUM_PARALLEL_CORES': NUM_PARALLEL_CORES, 'SEQ_INFO': SEQ_INFO}
+
+    for key, item in arg_dic.items():
+        if key in config:
+            config[key] = item
+
+    # update 3 config
     eval_config = {k: v for k, v in config.items() if k in default_eval_config.keys()}
     dataset_config = {k: v for k, v in config.items() if k in default_dataset_config.keys()}
     metrics_config = {k: v for k, v in config.items() if k in default_metrics_config.keys()}
+
+    # print current config
+    print('==' * 10, 'eval config', '==' * 10)
+    for key, value in eval_config.items():
+        print(key, ':', value)
+    print('==' * 10, 'dataset config', '==' * 10)
+    for key, value in dataset_config.items():
+        print(key, ':', value)
+    print('==' * 10, 'metrics config', '==' * 10)
+    for key, value in metrics_config.items():
+        print(key, ':', value)
+    print('==' * 20)
     
     # Filter frames if t0 and t1 are provided
     temp_dir_used = False
@@ -155,6 +123,12 @@ if __name__ == '__main__':
         # get original tracker folder
         original_MOT16train_tracker_folder = os.path.join(dataset_config['TRACKERS_FOLDER'], f"{dataset_config['BENCHMARK']}-{dataset_config['SPLIT_TO_EVAL']}", tracker)
         
+        print("Checking directory:", original_MOT16train_tracker_folder)
+        if not os.path.exists(original_MOT16train_tracker_folder):
+            print("Directory does not exist:", original_MOT16train_tracker_folder)
+        else:
+            print("Directory exists, proceeding to copy...")
+
         # copy the original tracker folder to a temporary folder
         temp_tracker_dir = os.path.join(dataset_config['TRACKERS_FOLDER'], f"{dataset_config['BENCHMARK']}-{dataset_config['SPLIT_TO_EVAL']}", f"{tracker}_temp")
         shutil.copytree(original_MOT16train_tracker_folder, temp_tracker_dir)
@@ -169,7 +143,7 @@ if __name__ == '__main__':
         # modify the config to indicate what we are evaluating now
         dataset_config['TRACKERS_TO_EVAL'] = [f"{tracker}_temp"]
         dataset_config['SEQ_INFO'] = {f"{seq_info}_temp": None}
-
+    
     # print current config
     print('==' * 10, 'eval config', '==' * 10)
     for key, value in eval_config.items():
@@ -181,7 +155,7 @@ if __name__ == '__main__':
     for key, value in metrics_config.items():
         print(key, ':', value)
     print('==' * 20)
-    
+
     # Run code
     evaluator = trackeval.Evaluator(eval_config)
     dataset_list = [trackeval.datasets.MotChallenge2DBox(dataset_config)]
@@ -191,12 +165,7 @@ if __name__ == '__main__':
             metrics_list.append(metric(metrics_config))
     if len(metrics_list) == 0:
         raise Exception('No metrics selected for evaluation')
-    
-    # performs a comprehensive evaluation of multiple object trackers across specified datasets and metrics
-    # The method receives a list of datasets (dataset_list) and a list of metric classes (metrics_list). \
-    # Each dataset corresponds to a different set of tracking data to be evaluated \
-    # (e.g., different MOT challenges like MOT17), 
-    # and each metric class is used to calculate specific evaluation criteria (e.g., HOTA, CLEAR).
+
     output_res, output_msg = evaluator.evaluate(dataset_list, metrics_list)
     
     # get the output: pedestrian_summary.txt in the tracker folder
@@ -214,6 +183,11 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"An error occurred: {e}")
         exit(1)
+    
+    # remove the temporary directories
+    if temp_dir_used:
+        shutil.rmtree(temp_gt_seq_dir)
+        shutil.rmtree(temp_tracker_dir)
     
     converted_values = converted_values = [float(value) if value.replace('.', '', 1).isdigit() else value for value in values]
     temp_dict = dict(zip(keys, converted_values))
@@ -246,10 +220,9 @@ if __name__ == '__main__':
     
     # convert dict to json
     json_eval_results = json.dumps(category_dicts, indent=4)
-    print(json_eval_results)
 
-    # Cleanup if temporary directory created
-    if temp_dir_used:
-        shutil.rmtree(temp_gt_seq_dir)
-        shutil.rmtree(temp_tracker_dir)
+    # # Return the results as a JSON response
+    return json_eval_results
 
+if __name__ == '__main__':
+    app.run(port=8000, debug=True)

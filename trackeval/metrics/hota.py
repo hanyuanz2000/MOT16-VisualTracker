@@ -5,6 +5,9 @@ from scipy.optimize import linear_sum_assignment
 from ._base_metric import _BaseMetric
 from .. import _timing
 
+import matplotlib
+matplotlib.use('Agg')  # This line configures Matplotlib to work without a display (non-interactive)
+from matplotlib import pyplot as plt
 
 class HOTA(_BaseMetric):
     """Class which implements the HOTA metrics.
