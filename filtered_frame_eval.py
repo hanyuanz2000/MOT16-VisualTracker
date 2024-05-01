@@ -1,26 +1,19 @@
-import streamlit as st
-from PIL import Image
-from io import BytesIO
-import base64
-from pyecharts.charts import Bar
-from pyecharts import options as opts
-import streamlit.components.v1 as components
-import cv2
-from plot_tracking import * 
-
-import sys
 import os
-from werkzeug.utils import secure_filename
 from multiprocessing import freeze_support
 import shutil
 import tempfile
 import configparser
 import json
 import trackeval 
-import io
-
 
 def filter_frames(input_file, t0, t1):
+    """ 
+    Filter frames in a file based on the frame number
+    Args:
+        input_file (str): The path to the input file
+        t0 (int): The start frame number
+        t1 (int): The end frame number
+    """
     # Create a temporary file
     temp_fd, temp_path = tempfile.mkstemp()
     try:
@@ -42,11 +35,26 @@ def filter_frames(input_file, t0, t1):
             os.remove(temp_path)
 
 def allowed_file(filename):
-    """ Check if the uploaded file is allowed by its extension """
+    """ Check if the uploaded file is allowed by its extension 
+    Args:
+        filename (str): The name of the file
+    Returns:
+        bool: True if the file is allowed, False otherwise
+    """
     allowed_extensions = {'txt'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
-def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
+def run_evaluation(t0, t1, SEQ_INFO = 'MOT16-02', uploaded_txt_dir = 'data/trackers/mot_challenge/MOT16-train/MPNTrack/data/MOT16-02.txt'):
+    """
+    Run the evaluation process
+    Args:
+        t0 (int): The start frame number
+        t1 (int): The end frame number
+        uploaded_txt_dir (str): The path to the uploaded txt file
+        SEQ_INFO (str): The sequence information
+    Returns:
+        dict: A dictionary containing the evaluation results
+    """
     # default config
     default_eval_config = trackeval.Evaluator.get_default_eval_config()
     default_eval_config['DISPLAY_LESS_PROGRESS'] = False
@@ -73,19 +81,6 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
     seqinfo_file = os.path.join(temp_gt_seq_dir, 'seqinfo.ini')
     seq_info_config = configparser.ConfigParser()
     seq_info_config.read(seqinfo_file)
-    SEQ_LENGTH = seq_info_config['Sequence']['seqLength']
-    
-    # # receive txt file uploaded by the user
-    # if uploaded_file and allowed_file(uploaded_file.filename):
-    #     filename = SEQ_INFO + '.txt'
-    #     # save the file in current directory
-    #     temp_txt_filepath = os.path.join(os.getcwd(), filename)
-    #     uploaded_file.save(temp_txt_filepath)
-    #     file_message = f"File saved at {temp_txt_filepath}"
-    # else:
-    #     file_message = "No file uploaded or file type not allowed."
-    #     # return file_message
-    # print(file_message)
     
     # modify SEQ info format for the config
     SEQ_INFO = {SEQ_INFO: None}
@@ -112,7 +107,7 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
     print('==' * 10, 'metrics config', '==' * 10)
     for key, value in metrics_config.items():
         print(key, ':', value)
-    print('==' * 20)
+    print('==' * 36)
     
     # Filter frames if t0 and t1 are provided
     temp_dir_used = False
@@ -128,6 +123,9 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
         
         # copy the original gt folder to a temporary folder
         temp_gt_seq_dir = os.path.join(dataset_config['GT_FOLDER'], f"{dataset_config['BENCHMARK']}-{dataset_config['SPLIT_TO_EVAL']}", f"{seq_info}_temp")
+        print(dataset_config['GT_FOLDER'], '==', dataset_config['BENCHMARK'], '==', dataset_config['SPLIT_TO_EVAL'], '==', seq_info, '==', temp_gt_seq_dir)
+        print("Checking original_MOT16train_GT_folder directory:", original_MOT16train_GT_folder)
+        print("Checking temp_gt_seq_dir directory:", temp_gt_seq_dir)
         shutil.copytree(original_MOT16train_GT_folder, temp_gt_seq_dir)
         
         # filter frames in the desired sequence
@@ -160,10 +158,10 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
         # filter frames in the desired tracker
         tracker_file = os.path.join(temp_tracker_dir, 'data', f"{seq_info}.txt")
         
-        # if upload txt file, replace the original tracker file with the uploaded file
-        # if uploaded_file:
-        #     os.remove(tracker_file)
-        #     os.rename(temp_txt_filepath, tracker_file)
+        # if upload txt file, replace the original tracker file in the temp diretory with the uploaded file (copy instead of remove uploaded_txt_dir) 
+        if uploaded_txt_dir:
+            shutil.copyfile(uploaded_txt_dir, tracker_file)
+
         filter_frames(tracker_file, t0, t1)
 
         # rename the txt
@@ -196,6 +194,7 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
         raise Exception('No metrics selected for evaluation')
 
     output_res, output_msg = evaluator.evaluate(dataset_list, metrics_list)
+    print('Eval Ends in Backend')
     
     # get the output: pedestrian_summary.txt in the tracker folder
     output_folder = temp_tracker_dir
@@ -217,9 +216,7 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
     if temp_dir_used:
         shutil.rmtree(temp_gt_seq_dir)
         shutil.rmtree(temp_tracker_dir)
-    
-    # if temp_txt_filepath and os.path.exists(temp_txt_filepath):
-    #     os.remove(temp_txt_filepath)
+        print("Temporary directories removed.")
     
     converted_values = converted_values = [float(value) if value.replace('.', '', 1).isdigit() else value for value in values]
     temp_dict = dict(zip(keys, converted_values))
@@ -250,113 +247,19 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
                 category_dicts[category][key] = value
                 break
     
-    # convert dict to json
-    json_eval_results = json.dumps(category_dicts, indent=4)
+    return category_dicts
+    # # convert dict to json
+    # json_eval_results = json.dumps(category_dicts, indent=4)
+    # print('Received JSON Evaluation Results, ready to return...')
 
-    # # Return the results as a JSON response
-    return json_eval_results
+    # # # Return the results as a JSON response
+    # return json_eval_results
 
-
-
-st.set_page_config(layout="wide", page_title="Vis Your MoT Model!")
-
-st.write("## 👀Visualize your model performance")
-
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-
-def convert_image(img):
-    buf = BytesIO()
-    img.save(buf, format="PNG")
-    byte_im = buf.getvalue()
-    return byte_im
-
-
-st.sidebar.write("## Upload and download :gear:")
-
-if 'page' not in st.session_state:
-    st.session_state.page = 1 
-
-col1, col2 = st.columns(2)
-my_upload = st.sidebar.file_uploader("Upload your model outcome", type=["txt"])
-
-dict_video = {1: 450, 2: 600, 3: 1500, 4: 1050, 5: 837,  6: 1194, 7: 500, 8: 625, 9: 525, 10: 654, 11: 900, 12: 900, 13: 750, 14: 750}
-
-video = st.sidebar.selectbox(
-    'Video You Want To Explore',
-    (f'Video{i}' for i in [2,4,5,9,10,11,13]),
-    index=0,
-)
-no_frames = dict_video[int(video[5:])]
-
-values = st.slider(
-    'Select a range of values',
-    1, no_frames, (1, no_frames), key='values'
-)
-
-st.write('Values:', values)
-
-# upload:txt file, video_no: video, values: start and end frame
-def generate_image(my_upload, video_no, values):
-    
-    text_file_path = f"/workspaces/Vis_MoT/MOT16/train/MOT16-{str(video_no[5:]).zfill(2)}/det/det.txt"
-    img_path = f"/workspaces/Vis_MoT/MOT16/train/MOT16-{str(video_no[5:]).zfill(2)}/img1/{str(values[0]).zfill(6)}.txt"
-
-    col1.write("Ground Truth MoT")
-    draw_box(text_file_path, img_path, values[0])
-    col1.write("\n")
-    draw_box(text_file_path, img_path, values[1])
-    # col1.image(image)
-
-    # fixed = remove(image)
-    col2.write("Your Model MoT")
-    draw_box(my_upload, img_path, values[0])
-    col2.write("\n")
-    draw_box(my_upload, img_path, values[1])
-
-    st.sidebar.markdown("\n")
-    # st.sidebar.download_button("Download visualization", convert_image(fixed), "fixed.png", "image/png")
-
-if my_upload is not None:
-    if my_upload.size > MAX_FILE_SIZE:
-        st.error("The uploaded file is too large. Please upload an image smaller than 5MB.")
-    # else:
-        # fix_image(upload=my_upload)
-# else:
-    # fix_image("./zebra.jpg")
-if my_upload:
-    generate_image(my_upload=my_upload, video_no=video, values = values)
-
-if my_upload:
-    json_eval = run_evaluation(values[0], values[1], my_upload, f"MOT16-{str(video[5:]).zfill(2)}")
-else: # file -> data/trackers/mot_challenge/MOT16-train/MPNTrack/data/MOT16-02.txt
-    json_eval = run_evaluation(values[0], values[1], None, f"MOT16-{str(video[5:]).zfill(2)}")
-
-st.write(json_eval)
-
-c = (Bar()
-        # TODO: metric name
-.add_xaxis(["Microsoft", "Amazon", "IBM", "Oracle", "Google", "Alibaba"])
-    # TODO: metric value
-.add_yaxis('2017-2018 Revenue in (billion $)', [21.2, 20.4, 10.3, 6.08, 4, 2.2])
-.set_global_opts(title_opts=opts.TitleOpts(title="Top cloud providers 2018", subtitle="2017-2018 Revenue"),
-                    toolbox_opts=opts.ToolboxOpts())
-.render_embed() # generate a local HTML file
-)
-components.html(c, width=1000, height=1000)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if __name__ == '__main__':
+    t0 = 1
+    t1 = 100
+    uploaded_txt_dir = 'data/trackers/mot_challenge/MOT16-train/MPNTrack/data/MOT16-02.txt'
+    SEQ_INFO = 'MOT16-02'
+    eval_results = run_evaluation(t0, t1, SEQ_INFO, uploaded_txt_dir)
+    print('Evaluation Results:')
+    print(eval_results)
