@@ -63,8 +63,8 @@ st.write(f"Start frame: {values[0]}", f", End frame: {values[1]}")
 
 # ===========================Image Check and Display============================
 # Image check and display
-image_check(my_upload, MAX_FILE_SIZE)
-# generate_image(my_upload=my_upload, video_sequence = video_sequence, values = values, col1=col1, col2=col2)
+if image_check(my_upload, MAX_FILE_SIZE):
+    generate_image(my_upload=my_upload, video_sequence = video_sequence, values = values, col1=col1, col2=col2)
 
 # ===========================Evaluation============================
 # Button to start evaluation
@@ -82,23 +82,22 @@ if st.button('Start Evaluation'):
         identification_quality = result['Identity']
         VACE = result['VACE']
         count = result['COUNT']
-
+        
+        # Render the charts
+        width_scale = 200
+        width_ratio = [len(tracking_quality), len(detection_quality), len(identification_quality), len(VACE), len(count)]
         # Display the evaluation results
         tracking_chart = create_bar_chart(tracking_quality, "Tracking Quality (HOTA)", "#5470C6")
         detection_chart = create_bar_chart(detection_quality, "Detection Quality (CLEAR)", "#91CC75")
         identification_chart = create_bar_chart(identification_quality, "Identification Quality (Identity)", "#EE6666")
         VACE_chart = create_bar_chart(VACE, "VACE", "#fac858")
         count_chart = create_bar_chart(count, "Count", "#73c0de")
-
-        # Render the charts
-        weight_scale = 200
-        weight_ratio = [len(tracking_quality), len(detection_quality), len(identification_quality), len(VACE), len(count)]
-        print(weight_ratio)
-        components.html(tracking_chart, height=600, width=weight_ratio[0]*weight_scale)
-        components.html(detection_chart, height=600, width=weight_ratio[1]*weight_scale)
-        components.html(identification_chart, height=600, width=weight_ratio[2]*weight_scale)
-        components.html(VACE_chart, height=600,width=weight_ratio[3]*weight_scale)
-        components.html(count_chart, height=600, width=weight_ratio[4]*weight_scale)
+        
+        components.html(tracking_chart, height=600)
+        components.html(detection_chart, height=600)
+        components.html(identification_chart, height=600)
+        components.html(VACE_chart, height=600)
+        components.html(count_chart, height=600)
         
         # Tell the user the evaluation is done
         st.success("Evaluation done! You can do new evaluation now.")

@@ -122,10 +122,10 @@ def run_evaluation(t0, t1, SEQ_INFO = 'MOT16-02', uploaded_txt_dir = 'data/track
         original_MOT16train_GT_folder = os.path.join(dataset_config['GT_FOLDER'], f"{dataset_config['BENCHMARK']}-{dataset_config['SPLIT_TO_EVAL']}", seq_info)
         
         # copy the original gt folder to a temporary folder
+        # empty the temp folder if it exists
         temp_gt_seq_dir = os.path.join(dataset_config['GT_FOLDER'], f"{dataset_config['BENCHMARK']}-{dataset_config['SPLIT_TO_EVAL']}", f"{seq_info}_temp")
-        print(dataset_config['GT_FOLDER'], '==', dataset_config['BENCHMARK'], '==', dataset_config['SPLIT_TO_EVAL'], '==', seq_info, '==', temp_gt_seq_dir)
-        print("Checking original_MOT16train_GT_folder directory:", original_MOT16train_GT_folder)
-        print("Checking temp_gt_seq_dir directory:", temp_gt_seq_dir)
+        # if os.path.exists(temp_gt_seq_dir):
+        #     shutil.rmtree(temp_gt_seq_dir)
         shutil.copytree(original_MOT16train_GT_folder, temp_gt_seq_dir)
         
         # filter frames in the desired sequence
@@ -151,8 +151,10 @@ def run_evaluation(t0, t1, SEQ_INFO = 'MOT16-02', uploaded_txt_dir = 'data/track
         else:
             print("Directory exists, proceeding to copy...")
 
-        # copy the original tracker folder to a temporary folder
+        # copy the original tracker folder to a temporary folder, if temp folder exists, remove it
         temp_tracker_dir = os.path.join(dataset_config['TRACKERS_FOLDER'], f"{dataset_config['BENCHMARK']}-{dataset_config['SPLIT_TO_EVAL']}", f"{tracker}_temp")
+        # if os.path.exists(temp_tracker_dir):
+        #     shutil.rmtree(temp_tracker_dir)
         shutil.copytree(original_MOT16train_tracker_folder, temp_tracker_dir)
     
         # filter frames in the desired tracker

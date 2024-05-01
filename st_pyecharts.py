@@ -10,7 +10,7 @@ def create_bar_chart(data, title, bar_color = '#5470c6'):
     bar.add_yaxis(title, list(data.values()), itemstyle_opts=opts.ItemStyleOpts(color=bar_color))
     bar.set_global_opts(
         title_opts=opts.TitleOpts(title=title),
-        xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-15)),  # Optional: rotate labels if they overlap or are too long
+        xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-90)),  # Optional: rotate labels if they overlap or are too long
         yaxis_opts=opts.AxisOpts(name='Score')  # Optional: add a label to the Y-axis
     )
     # display x and y axis labels

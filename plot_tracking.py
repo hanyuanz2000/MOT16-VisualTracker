@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from pathlib import Path
 
 #Takes a filename and a frame id, returns all bounding boxes and scores in that frame.
 #tid = target ID
@@ -8,14 +9,15 @@ def get_bbox(file, frame_id):
     tids = []
     tlwhs_lst = []
     scores = []
-    with open(file, 'r') as f:
+    with open(file, "r") as f:
         for line in f:
             line = line.strip()
             values = line.split(',')
             if (not values[0].isdigit()) or int(values[0])!=frame_id:
                 continue
+
             frame_id = int(values[0])
-            tid = int(values[1])
+            tid = int(float(values[1]))
             tlwhs = []
             for i in values[2:6]:
                 tlwhs.append(float(i))
@@ -60,8 +62,6 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
     return img
 
-
-
 def get_color(idx):
     idx = idx * 3
     color = ((37 * idx) % 255, (17 * idx) % 255, (29 * idx) % 255)
@@ -70,7 +70,7 @@ def get_color(idx):
 
 #plot bounding boxes on a single image
 def plot_tracking(image, tlwhs, obj_ids, scores=None, frame_id=0, fps=0., ids2=None):
-    frame_id = frame_id+1
+    # frame_id = frame_id+1
     image = cv2.imread(image, cv2.IMREAD_COLOR)
     im = np.ascontiguousarray(np.copy(image))
     im_h, im_w = im.shape[:2]
@@ -185,13 +185,12 @@ _COLORS = np.array(
 ).astype(np.float32).reshape(-1, 3)
 
 
-def draw_box(bbox, img, frame_id):
-    print(frame_id)
+def draw_box(bbox, img, frame_id, folder):
     frame_ids, tids, tlwhs_lst, scores = get_bbox(bbox, frame_id)
-    print(frame_ids)
-    # image = plot_tracking(img, tlwhs_lst, tids, frame_id=frame_ids[0])
-    # output_path = f'output_image_{frame_id}.jpg'
-    # cv2.imwrite(output_path, image)
+    if len(frame_ids)>0:
+        image = plot_tracking(img, tlwhs_lst, tids, frame_id=frame_ids[0])
+        output_path = f'{folder}/output_image_{frame_id}.jpg'
+        cv2.imwrite(output_path, image)
 
 #Sample Usage
 '''
