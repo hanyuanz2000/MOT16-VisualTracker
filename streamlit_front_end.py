@@ -28,7 +28,7 @@ st.sidebar.write("## Select the video sequence you want to evaluate and upload y
 if 'page' not in st.session_state:
     st.session_state.page = 1 
 
-# ===========================Select Video and Frame============================
+# ==============Select Video, Upload Model Outcome, and Select Frame to Evaluate =====================
 col1, col2 = st.columns(2)
 
 # Video selection
