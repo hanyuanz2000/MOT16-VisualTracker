@@ -9,8 +9,6 @@ import streamlit.components.v1 as components
 import cv2
 from plot_tracking import * 
 
-from flask import Flask, request, make_response, send_file, jsonify, render_template
-from flask_cors import CORS
 import sys
 import os
 from werkzeug.utils import secure_filename
@@ -350,7 +348,7 @@ if my_upload is not None:
 if my_upload:
     generate_image(my_upload=my_upload, video_no=video, values = values)
 
-run_evaluation(values[0], values[1], my_upload, f"MOT16-{str(video[5:]).zfill(2)}")
+st.write(run_evaluation(values[0], values[1], my_upload, f"MOT16-{str(video[5:]).zfill(2)}"))
 
 
 c = (Bar()
