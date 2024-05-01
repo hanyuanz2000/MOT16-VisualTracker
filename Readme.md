@@ -17,6 +17,18 @@ Looking ahead, should this repository gain traction and prove useful to a broad 
 
 
 ## How to Use MOT16-VisualTracker
+### Download Data
+To ensure that MOT16-VisualTracker operates smoothly, you will need to download specific datasets that are essential for both visualizations and evaluations:
+
+1. **Tracker Detection Results and Ground Truth Data**:
+   - Download the data from [this link](https://omnomnom.vision.rwth-aachen.de/data/TrackEval/data.zip). This zip file contains the formatted TXT files necessary for our metric evaluation, including tracker detection results and ground truth data.
+   - After downloading, extract the contents and place the `data` folder in the root directory of your working environment. This step is crucial as our tool references these files to generate evaluation metrics.
+
+2. **MOT16 Dataset**:
+   - Obtain the MOT16 training and testing data by downloading it from [MOTChallenge](https://motchallenge.net/data/MOT16.zip). This dataset is required for plotting the detection boxes on the video sequences.
+   - Once downloaded, extract the `MOT16` folder and place it directly under the root working directory of your project.
+
+By following these steps and organizing the data as described, you’ll have all the necessary files in place to start analyzing and visualizing object tracking performance with MOT16-VisualTracker. Make sure the paths in your project settings are configured to these directories to avoid any file-not-found errors during execution.
 
 ### Setting Up and Running the Application
 To begin using MOT16-VisualTracker, you'll need to install all necessary dependencies as specified in our `requirements.txt`. Once all dependencies are installed, you can launch the application by running the following command in your terminal:
@@ -42,6 +54,7 @@ By following these steps, you can effectively use MOT16-VisualTracker to monitor
 ![Usage Demo1](Demo/1.png)
 ![Usage Demo2](Demo/2.png)
 
+
 ## Acknowledgements
 
 We would like to extend our gratitude to the developers and contributors of the following projects, whose work has significantly enhanced the functionality of MOT16-VisualTracker:
@@ -51,5 +64,3 @@ We would like to extend our gratitude to the developers and contributors of the 
 2. **[ByteTrack](https://github.com/ifzhang/ByteTrack)** - We have incorporated parts of ByteTrack's codebase, particularly those responsible for drawing bounding boxes. Their efficient and effective visualization methods have greatly facilitated the user experience in tracking object movements across frames.
 
 Our project builds upon these outstanding open-source contributions to offer a seamless and powerful tool for MOT model developers. We appreciate the opportunity to utilize such high-quality resources and recommend our users to explore these projects to further their understanding and capabilities in the field of object tracking.
-
-## How to Run our code

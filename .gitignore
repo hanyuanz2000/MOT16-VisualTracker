@@ -15,3 +15,5 @@ GT_plot/
 your_model_plot/
 .idea
 error_log.txt
+*.txt
+!requirements.txt
