@@ -250,12 +250,6 @@ def run_evaluation(t0, t1, SEQ_INFO = 'MOT16-02', uploaded_txt_dir = 'data/track
                 break
     
     return category_dicts
-    # # convert dict to json
-    # json_eval_results = json.dumps(category_dicts, indent=4)
-    # print('Received JSON Evaluation Results, ready to return...')
-
-    # # # Return the results as a JSON response
-    # return json_eval_results
 
 if __name__ == '__main__':
     t0 = 1
