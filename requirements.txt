@@ -8,4 +8,8 @@ pytest==6.0.1
 Pillow==8.1.2
 tqdm==4.64.0
 tabulate
+rembg==2.0.50
+Pillow==9.3.0
+streamlit==1.21.0
+numba==0.57
 
