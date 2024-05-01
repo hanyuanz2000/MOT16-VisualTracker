@@ -2,13 +2,14 @@ from flask import Flask, request, make_response, send_file, jsonify, render_temp
 from flask_cors import CORS
 import sys
 import os
-import argparse
+from werkzeug.utils import secure_filename
 from multiprocessing import freeze_support
 import shutil
 import tempfile
 import configparser
 import json
 import trackeval 
+import io
 
 app = Flask(__name__)
 CORS(app)
@@ -35,6 +36,11 @@ def filter_frames(input_file, t0, t1):
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
+def allowed_file(filename):
+    """ Check if the uploaded file is allowed by its extension """
+    allowed_extensions = {'txt'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
 @app.route('/run_evaluation', methods=['POST'])
 def run_evaluation():
     # default config
@@ -59,13 +65,36 @@ def run_evaluation():
     NUM_PARALLEL_CORES = 1
     
     # Extract parameters from the request data
-    data = request.get_json()
-    t0 = data.get('t0')
-    t1 = data.get('t1')
-    # txt_file = data.get('txt_file')
-    SEQ_INFO = data.get('SEQ_INFO')
-    SEQ_INFO = {SEQ_INFO: None}
+    SEQ_INFO = request.form.get('SEQ_INFO') if request.form.get('SEQ_INFO') else 'MOT16-02'
+    
+    # get default seq length
+    temp_gt_seq_dir = os.path.join(default_dataset_config['GT_FOLDER'], f"{BENCHMARK}-{SPLIT_TO_EVAL}", f"{SEQ_INFO}")
+    seqinfo_file = os.path.join(temp_gt_seq_dir, 'seqinfo.ini')
+    print("seqinfo_file:", seqinfo_file)
+    seq_info_config = configparser.ConfigParser()
+    seq_info_config.read(seqinfo_file)
+    SEQ_LENGTH = seq_info_config['Sequence']['seqLength']
+    
+    # get t0 and t1 for filtering frames
+    t0 = int(request.form.get('t0')) if request.form.get('t0') else 1
+    t1 = int(request.form.get('t1')) if request.form.get('t1') else int(SEQ_LENGTH)
 
+    # receive txt file uploaded by the user
+    uploaded_file = request.files.get('txt_file') if request.files.get('txt_file') else None
+    if uploaded_file and allowed_file(uploaded_file.filename):
+        filename = SEQ_INFO + '.txt'
+        # save the file in current directory
+        filepath = os.path.join(os.getcwd(), filename)
+        uploaded_file.save(filepath)
+        file_message = f"File saved at {filepath}"
+    else:
+        file_message = "No file uploaded or file type not allowed."
+        # return file_message
+    print(file_message)
+    
+    # modify SEQ info format for the config
+    SEQ_INFO = {SEQ_INFO: None}
+    
     arg_dic = {'BENCHMARK': BENCHMARK, 'SPLIT_TO_EVAL': SPLIT_TO_EVAL, 'TRACKERS_TO_EVAL': TRACKERS_TO_EVAL,
      'METRICS': METRICS, 'USE_PARALLEL': USE_PARALLEL, 'NUM_PARALLEL_CORES': NUM_PARALLEL_CORES, 'SEQ_INFO': SEQ_INFO}
 
@@ -132,9 +161,13 @@ def run_evaluation():
         # copy the original tracker folder to a temporary folder
         temp_tracker_dir = os.path.join(dataset_config['TRACKERS_FOLDER'], f"{dataset_config['BENCHMARK']}-{dataset_config['SPLIT_TO_EVAL']}", f"{tracker}_temp")
         shutil.copytree(original_MOT16train_tracker_folder, temp_tracker_dir)
-
+    
         # filter frames in the desired tracker
         tracker_file = os.path.join(temp_tracker_dir, 'data', f"{seq_info}.txt")
+        # if uploaded file is txt file, replace the original tracker file with the uploaded file
+        if uploaded_file:
+            os.remove(tracker_file)
+            os.rename(filepath, tracker_file)
         filter_frames(tracker_file, t0, t1)
 
         # rename the txt
