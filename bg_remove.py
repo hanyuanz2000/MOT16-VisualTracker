@@ -1,5 +1,4 @@
 import streamlit as st
-from rembg import remove
 from PIL import Image
 from io import BytesIO
 import base64
@@ -76,18 +75,17 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
     seq_info_config.read(seqinfo_file)
     SEQ_LENGTH = seq_info_config['Sequence']['seqLength']
     
-
-    # receive txt file uploaded by the user
-    if uploaded_file and allowed_file(uploaded_file.filename):
-        filename = SEQ_INFO + '.txt'
-        # save the file in current directory
-        temp_txt_filepath = os.path.join(os.getcwd(), filename)
-        uploaded_file.save(temp_txt_filepath)
-        file_message = f"File saved at {temp_txt_filepath}"
-    else:
-        file_message = "No file uploaded or file type not allowed."
-        # return file_message
-    print(file_message)
+    # # receive txt file uploaded by the user
+    # if uploaded_file and allowed_file(uploaded_file.filename):
+    #     filename = SEQ_INFO + '.txt'
+    #     # save the file in current directory
+    #     temp_txt_filepath = os.path.join(os.getcwd(), filename)
+    #     uploaded_file.save(temp_txt_filepath)
+    #     file_message = f"File saved at {temp_txt_filepath}"
+    # else:
+    #     file_message = "No file uploaded or file type not allowed."
+    #     # return file_message
+    # print(file_message)
     
     # modify SEQ info format for the config
     SEQ_INFO = {SEQ_INFO: None}
@@ -163,9 +161,9 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
         tracker_file = os.path.join(temp_tracker_dir, 'data', f"{seq_info}.txt")
         
         # if upload txt file, replace the original tracker file with the uploaded file
-        if uploaded_file:
-            os.remove(tracker_file)
-            os.rename(temp_txt_filepath, tracker_file)
+        # if uploaded_file:
+        #     os.remove(tracker_file)
+        #     os.rename(temp_txt_filepath, tracker_file)
         filter_frames(tracker_file, t0, t1)
 
         # rename the txt
@@ -219,7 +217,9 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
     if temp_dir_used:
         shutil.rmtree(temp_gt_seq_dir)
         shutil.rmtree(temp_tracker_dir)
-        shutil.rmtree(temp_txt_filepath)
+    
+    # if temp_txt_filepath and os.path.exists(temp_txt_filepath):
+    #     os.remove(temp_txt_filepath)
     
     converted_values = converted_values = [float(value) if value.replace('.', '', 1).isdigit() else value for value in values]
     temp_dict = dict(zip(keys, converted_values))
@@ -258,25 +258,6 @@ def run_evaluation(t0, t1, uploaded_file, SEQ_INFO):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 st.set_page_config(layout="wide", page_title="Vis Your MoT Model!")
 
 st.write("## 👀Visualize your model performance")
@@ -298,10 +279,7 @@ if 'page' not in st.session_state:
 col1, col2 = st.columns(2)
 my_upload = st.sidebar.file_uploader("Upload your model outcome", type=["txt"])
 
-
 dict_video = {1: 450, 2: 600, 3: 1500, 4: 1050, 5: 837,  6: 1194, 7: 500, 8: 625, 9: 525, 10: 654, 11: 900, 12: 900, 13: 750, 14: 750}
-
-
 
 video = st.sidebar.selectbox(
     'Video You Want To Explore',
@@ -348,8 +326,12 @@ if my_upload is not None:
 if my_upload:
     generate_image(my_upload=my_upload, video_no=video, values = values)
 
-st.write(run_evaluation(values[0], values[1], my_upload, f"MOT16-{str(video[5:]).zfill(2)}"))
+if my_upload:
+    json_eval = run_evaluation(values[0], values[1], my_upload, f"MOT16-{str(video[5:]).zfill(2)}")
+else: # file -> data/trackers/mot_challenge/MOT16-train/MPNTrack/data/MOT16-02.txt
+    json_eval = run_evaluation(values[0], values[1], None, f"MOT16-{str(video[5:]).zfill(2)}")
 
+st.write(json_eval)
 
 c = (Bar()
         # TODO: metric name
