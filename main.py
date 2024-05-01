@@ -70,7 +70,6 @@ def run_evaluation():
     # get default seq length
     temp_gt_seq_dir = os.path.join(default_dataset_config['GT_FOLDER'], f"{BENCHMARK}-{SPLIT_TO_EVAL}", f"{SEQ_INFO}")
     seqinfo_file = os.path.join(temp_gt_seq_dir, 'seqinfo.ini')
-    print("seqinfo_file:", seqinfo_file)
     seq_info_config = configparser.ConfigParser()
     seq_info_config.read(seqinfo_file)
     SEQ_LENGTH = seq_info_config['Sequence']['seqLength']
@@ -84,9 +83,9 @@ def run_evaluation():
     if uploaded_file and allowed_file(uploaded_file.filename):
         filename = SEQ_INFO + '.txt'
         # save the file in current directory
-        filepath = os.path.join(os.getcwd(), filename)
-        uploaded_file.save(filepath)
-        file_message = f"File saved at {filepath}"
+        temp_txt_filepath = os.path.join(os.getcwd(), filename)
+        uploaded_file.save(temp_txt_filepath)
+        file_message = f"File saved at {temp_txt_filepath}"
     else:
         file_message = "No file uploaded or file type not allowed."
         # return file_message
@@ -164,10 +163,11 @@ def run_evaluation():
     
         # filter frames in the desired tracker
         tracker_file = os.path.join(temp_tracker_dir, 'data', f"{seq_info}.txt")
-        # if uploaded file is txt file, replace the original tracker file with the uploaded file
+        
+        # if upload txt file, replace the original tracker file with the uploaded file
         if uploaded_file:
             os.remove(tracker_file)
-            os.rename(filepath, tracker_file)
+            os.rename(temp_txt_filepath, tracker_file)
         filter_frames(tracker_file, t0, t1)
 
         # rename the txt
@@ -221,6 +221,7 @@ def run_evaluation():
     if temp_dir_used:
         shutil.rmtree(temp_gt_seq_dir)
         shutil.rmtree(temp_tracker_dir)
+        shutil.rmtree(temp_txt_filepath)
     
     converted_values = converted_values = [float(value) if value.replace('.', '', 1).isdigit() else value for value in values]
     temp_dict = dict(zip(keys, converted_values))
