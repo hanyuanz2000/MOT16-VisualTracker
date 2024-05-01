@@ -21,7 +21,7 @@ Looking ahead, should this repository gain traction and prove useful to a broad 
 To ensure that MOT16-VisualTracker operates smoothly, you will need to download specific datasets that are essential for both visualizations and evaluations:
 
 1. **Tracker Detection Results and Ground Truth Data**:
-   - Download the data from [this link](https://omnomnom.vision.rwth-aachen.de/data/TrackEval/data.zip). This zip file contains the formatted TXT files necessary for our metric evaluation, including tracker detection results and ground truth data.
+   - Download the data from [here](https://omnomnom.vision.rwth-aachen.de/data/TrackEval/data.zip). This zip file contains the formatted TXT files necessary for our metric evaluation, including tracker detection results and ground truth data.
    - After downloading, extract the contents and place the `data` folder in the root directory of your working environment. This step is crucial as our tool references these files to generate evaluation metrics.
 
 2. **MOT16 Dataset**:

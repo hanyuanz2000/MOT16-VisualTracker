@@ -1,5 +1,6 @@
 .idea
 .vscode
+.DS_Store
 **.pyc
 **__pycache__
 gt_data/*
@@ -11,8 +12,6 @@ data
 MOT16
 !goutput/Readme.md
 **/__pycache__
-GT_plot/
-your_model_plot/
 .idea
 error_log.txt
 *.txt
