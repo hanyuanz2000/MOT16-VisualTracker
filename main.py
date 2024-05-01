@@ -1,3 +1,6 @@
+'''
+This is the main script to run the Streamlit app to display the evaluation results MOT16 train dataset.
+'''
 import streamlit as st
 import streamlit.components.v1 as components
 from PIL import Image
@@ -5,13 +8,11 @@ from io import BytesIO
 import base64
 from pyecharts.charts import Bar
 from pyecharts import options as opts
-from plot_tracking import * 
-import traceback
 from werkzeug.utils import secure_filename
 from multiprocessing import freeze_support
-from filtered_frame_eval import run_evaluation
-from generate_image import generate_image, image_check
-from st_pyecharts import create_bar_chart
+from evaluate_filtered_frames import run_evaluation
+from image_generator import generate_image, image_check
+from charts import create_bar_chart
 import os
 
 # ===========================Streamlit Setup============================

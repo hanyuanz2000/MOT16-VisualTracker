@@ -1,3 +1,6 @@
+'''
+This file contains helper functions to create different bar charts using Pyecharts.
+'''
 from pyecharts.charts import Bar
 from pyecharts import options as opts
 import streamlit as st
