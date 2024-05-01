@@ -7,7 +7,6 @@ gt_data/*
 tracker_output/*
 !tracker_output/Readme.md
 output/*
-data
 !goutput/Readme.md
 **/__pycache__
 .idea
