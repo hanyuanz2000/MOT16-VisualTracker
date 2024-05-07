@@ -219,6 +219,15 @@ class MotChallenge2DBox(_BaseDataset):
         # Check for any extra time keys
         current_time_keys = [str( t+ 1) for t in range(num_timesteps)]
         extra_time_keys = [x for x in read_data.keys() if x not in current_time_keys]
+
+        ###debug#####
+        # print('==========debug==========')
+        # print('seq:', seq)
+        # print('num_timesteps:', num_timesteps)
+        # print('current_time_keys:', current_time_keys)
+        # print('extra_time_keys:', extra_time_keys)
+        # print('==========end debug==========')
+        #############
         if len(extra_time_keys) > 0:
             if is_gt:
                 text = 'Ground-truth'
