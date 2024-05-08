@@ -21,7 +21,7 @@ st.set_page_config(layout="wide", page_title="Vis Your MoT Model!")
 st.write("##Visualize your model performance")
 
 # Set max file size and acceptable file types
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB=
 
 # Display the sidebar
 st.sidebar.write("## Select the video sequence you want to evaluate and upload your model outcome!")
