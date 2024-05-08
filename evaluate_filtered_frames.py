@@ -60,7 +60,7 @@ def run_evaluation(t0, t1, SEQ_INFO = 'MOT16-02', uploaded_txt_dir = 'data/track
     default_eval_config['DISPLAY_LESS_PROGRESS'] = False
 
     # 2. configs include GT data, tracker data, benchmark, SPLIT_TO_EVAL, etc
-    default_dataset_config = trackeval.datasets.MotChallenge2DBox.get_default_dataset_config()
+    default_dataset_config = trackeval.datasets.MotChallenge2DBox_CHUNK.get_default_dataset_config()
 
     # 3. configs include metrics, thresholds, etc
     default_metrics_config = {'METRICS': ['HOTA', 'CLEAR', 'Identity'], 'THRESHOLD': 0.5}
@@ -74,7 +74,9 @@ def run_evaluation(t0, t1, SEQ_INFO = 'MOT16-02', uploaded_txt_dir = 'data/track
     TRACKERS_TO_EVAL = ['MPNTrack']
     METRICS = ['HOTA', 'CLEAR', 'Identity', 'VACE']
     USE_PARALLEL = False
-    NUM_PARALLEL_CORES = 1   
+    NUM_PARALLEL_CORES = 1
+    t0 = t0
+    t1 = t1
     
     # get default seq length
     temp_gt_seq_dir = os.path.join(default_dataset_config['GT_FOLDER'], f"{BENCHMARK}-{SPLIT_TO_EVAL}", f"{SEQ_INFO}")
@@ -86,12 +88,12 @@ def run_evaluation(t0, t1, SEQ_INFO = 'MOT16-02', uploaded_txt_dir = 'data/track
     SEQ_INFO = {SEQ_INFO: None}
     
     arg_dic = {'BENCHMARK': BENCHMARK, 'SPLIT_TO_EVAL': SPLIT_TO_EVAL, 'TRACKERS_TO_EVAL': TRACKERS_TO_EVAL,
-     'METRICS': METRICS, 'USE_PARALLEL': USE_PARALLEL, 'NUM_PARALLEL_CORES': NUM_PARALLEL_CORES, 'SEQ_INFO': SEQ_INFO}
+     'METRICS': METRICS, 'USE_PARALLEL': USE_PARALLEL, 'NUM_PARALLEL_CORES': NUM_PARALLEL_CORES, 'SEQ_INFO': SEQ_INFO, 't0': t0, 't1': t1}
 
     for key, item in arg_dic.items():
         if key in config:
             config[key] = item
-
+    
     # update 3 config
     eval_config = {k: v for k, v in config.items() if k in default_eval_config.keys()}
     dataset_config = {k: v for k, v in config.items() if k in default_dataset_config.keys()}
@@ -184,7 +186,7 @@ def run_evaluation(t0, t1, SEQ_INFO = 'MOT16-02', uploaded_txt_dir = 'data/track
 
     # Run code
     evaluator = trackeval.Evaluator(eval_config)
-    dataset_list = [trackeval.datasets.MotChallenge2DBox(dataset_config)]
+    dataset_list = [trackeval.datasets.MotChallenge2DBox_CHUNK(dataset_config)]
     metrics_list = []
     for metric in [trackeval.metrics.HOTA, trackeval.metrics.CLEAR, trackeval.metrics.Identity, trackeval.metrics.VACE]:
         if metric.get_name() in metrics_config['METRICS']:
@@ -249,7 +251,7 @@ def run_evaluation(t0, t1, SEQ_INFO = 'MOT16-02', uploaded_txt_dir = 'data/track
     return category_dicts
 
 if __name__ == '__main__':
-    t0 = 1
+    t0 = 20
     t1 = 100
     uploaded_txt_dir = 'data/trackers/mot_challenge/MOT16-train/MPNTrack/data/MOT16-02.txt'
     SEQ_INFO = 'MOT16-02'

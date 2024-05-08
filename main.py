@@ -107,11 +107,13 @@ if st.button('Clear Evaluation'):
     # delete the saved file
     if my_upload is not None:
         os.remove(my_upload.name)
-        # delete every image in the GT_plot and your_model_plot folder
+        # delete every image in the GT_plot and your_model_plot folder except the .gitignore file
         for file in os.listdir('GT_plot'):
-            os.remove(f'GT_plot/{file}')
+            if file != '.gitignore':
+                os.remove(f'GT_plot/{file}')
         for file in os.listdir('your_model_plot'):
-            os.remove(f'your_model_plot/{file}')
+            if file != '.gitignore':
+                os.remove(f'your_model_plot/{file}')
         st.success(f'the txt file uploaded for video sequence {video_sequence} has been deleted')
 
 
