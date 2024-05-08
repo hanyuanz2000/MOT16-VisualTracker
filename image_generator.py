@@ -11,6 +11,7 @@ import streamlit.components.v1 as components
 import cv2
 import numpy as np
 from pathlib import Path
+import base64
 
 def image_check(my_upload, MAX_FILE_SIZE):
     if my_upload:
@@ -25,6 +26,7 @@ def convert_image(img):
     img.save(buf, format="PNG")
     byte_im = buf.getvalue()
     return byte_im
+
 
 # upload:txt file, video_no: video, values: start and end frame
 def generate_image(my_upload, video_sequence, values, col1, col2):
@@ -58,6 +60,64 @@ def generate_image(my_upload, video_sequence, values, col1, col2):
 
     st.sidebar.markdown("\n")
     # st.sidebar.download_button("Download visualization", convert_image(fixed), "fixed.png", "image/png")
+
+# Function to create a zoomable image viewer in Streamlit
+def create_zoomable_image(image_path, col, frame_num):
+    # Convert image to base64 to embed in HTML
+    encoded_image = base64.b64encode(open(image_path, "rb").read()).decode()
+    html_code = f"""
+    <link rel="stylesheet" href="https://unpkg.com/viewerjs/dist/viewer.min.css">
+    <script src="https://unpkg.com/viewerjs/dist/viewer.min.js"></script>
+    <div style="text-align: center; width: 384px; height: 216px; overflow: hidden; display: flex; justify-content: center; align-items: center;">
+        <img id="image" src="data:image/jpg;base64,{encoded_image}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+    </div>
+    <script>
+        var image = document.getElementById('image');
+        var viewer = new Viewer(image, {{
+            inline: true,
+            navbar: false,
+            toolbar: {{
+                zoomIn: 4,
+                zoomOut: 4,
+                oneToOne: 1,
+                reset: 1,
+                prev: 0,
+                play: 0,
+                next: 0,
+                rotateLeft: 4,
+                rotateRight: 4,
+                flipHorizontal: 4,
+                flipVertical: 4
+            }},
+            viewed() {{
+                viewer.zoomTo(0.22); // Adjust this value as needed to ensure the full image is visible
+            }}
+        }});
+    </script>
+    """
+    with col:
+        components.html(html_code, height=216, width=384)
+        st.write(f"frame {frame_num}")
+
+def generate_image_zoomable(my_upload, video_sequence, values, col1, col2):
+    text_file_path = f"data/gt/mot_challenge/MOT16-train/{video_sequence}/gt/gt.txt"
+    img_path_base = f"MOT16/train/{video_sequence}/img1/"
+    
+    # Process the first frame for ground truth and model outcome
+    img_path_0 = f"{img_path_base}{str(values[0]).zfill(6)}.jpg"
+    draw_box(text_file_path, img_path_0, values[0], 'GT_plot')
+    col1.write("Ground Truth MoT")
+    create_zoomable_image(f'GT_plot/output_image_{values[0]}.jpg', col1, values[0])
+    draw_box(my_upload.name, img_path_0, values[0], 'your_model_plot')
+    col2.write("Your Model MoT")
+    create_zoomable_image(f'your_model_plot/output_image_{values[0]}.jpg', col2, values[0])
+    
+    # Process the second frame for ground truth and model outcome
+    img_path_1 = f"{img_path_base}{str(values[1]).zfill(6)}.jpg"
+    draw_box(text_file_path, img_path_1, values[1], 'GT_plot')
+    create_zoomable_image(f'GT_plot/output_image_{values[1]}.jpg', col1, values[1])
+    draw_box(my_upload.name, img_path_1, values[1], 'your_model_plot')
+    create_zoomable_image(f'your_model_plot/output_image_{values[1]}.jpg', col2, values[1])
 
 #Takes a filename and a frame id, returns all bounding boxes and scores in that frame.
 #tid = target ID
