@@ -34,7 +34,13 @@ By following these steps and organizing the data as described, you’ll have all
 To begin using MOT16-VisualTracker, you'll need to install all necessary dependencies as specified in our `requirements.txt`. Once all dependencies are installed, you can launch the application by running the following command in your terminal:
 
 ```bash
-streamlit run main.py --server.enableCORS false --server.enableXsrfProtection false
+streamlit run main.py
+```
+
+For the zoomable version of MOT16-VisualTracker, please run:
+
+```bash
+streamlit run main_in_time_and_zoomable.py
 ```
 
 ### Using the Application
@@ -54,13 +60,10 @@ By following these steps, you can effectively use MOT16-VisualTracker to monitor
 ![Usage Demo1](Demo/1.png)
 ![Usage Demo2](Demo/2.png)
 
-
 ## Acknowledgements
 
 We would like to extend our gratitude to the developers and contributors of the following projects, whose work has significantly enhanced the functionality of MOT16-VisualTracker:
 
 1. **[TrackEval](https://github.com/JonathonLuiten/TrackEval)** - This repository is a fork of Jonathon Luiten's TrackEval. We have utilized tools within the `trackeval` folder extensively to acquire various evaluation metrics. The robust evaluation capabilities provided by TrackEval have been integral in offering comprehensive metric assessments within our tool.
-
-2. **[ByteTrack](https://github.com/ifzhang/ByteTrack)** - We have incorporated parts of ByteTrack's codebase, particularly those responsible for drawing bounding boxes. Their efficient and effective visualization methods have greatly facilitated the user experience in tracking object movements across frames.
 
 Our project builds upon these outstanding open-source contributions to offer a seamless and powerful tool for MOT model developers. We appreciate the opportunity to utilize such high-quality resources and recommend our users to explore these projects to further their understanding and capabilities in the field of object tracking.

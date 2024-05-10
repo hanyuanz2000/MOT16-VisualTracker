@@ -11,23 +11,23 @@ from pyecharts import options as opts
 from werkzeug.utils import secure_filename
 from multiprocessing import freeze_support
 from evaluate_filtered_frames import run_evaluation
-from image_generator import generate_image, image_check
+from image_generator import generate_image, image_check, generate_image_zoomable
 from charts import create_bar_chart
 import os
 
 # ===========================Streamlit Setup============================
 # Set page title and layout
 st.set_page_config(layout="wide", page_title="Vis Your MoT Model!")
-st.write("## 👀Visualize your model performance")
+st.write("##Visualize your model performance")
 
 # Set max file size and acceptable file types
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB=
 
 # Display the sidebar
 st.sidebar.write("## Select the video sequence you want to evaluate and upload your model outcome!")
 
 if 'page' not in st.session_state:
-    st.session_state.page = 1 
+    st.session_state.page = 1
 
 # ==============Select Video, Upload Model Outcome, and Select Frame to Evaluate =====================
 col1, col2 = st.columns(2)
@@ -51,58 +51,45 @@ if my_upload is not None:
         f.write(my_upload.getbuffer())
     st.success(f"the txt file uploaded for video sequence {video_sequence} has been saved")
 
-
 # Frame selection
 n_frames = dict_video_sequence[video_sequence]
-values = st.slider(
-    'Select a range of values',
-    1, n_frames, (1, n_frames), key='values'
-)
 
-# Show the range of frames selected
-st.write(f"Start frame: {values[0]}", f", End frame: {values[1]}")
+# Frame selection using session state to trigger re-evaluation
+if 'frame_range' not in st.session_state:
+    st.session_state.frame_range = (1, dict_video_sequence[video_sequence])
 
-t0 = values[0]
-t1 = values[1]
+new_range = st.slider('Select a range of values', 1, dict_video_sequence[video_sequence], st.session_state.frame_range, key='values')
+st.write(f"Selected frame range: {new_range}")
+if new_range != st.session_state.frame_range:
+    st.session_state.frame_range = new_range
+    st.session_state.evaluate = True  # Trigger evaluation
 
 # ===========================Image Check and Display============================
 # Image check and display
 if image_check(my_upload, MAX_FILE_SIZE):
-    generate_image(my_upload=my_upload, video_sequence = video_sequence, values = values, col1=col1, col2=col2)
+    generate_image_zoomable(my_upload=my_upload, video_sequence = video_sequence, values = new_range, col1=col1, col2=col2)
 
-# ===========================Evaluation============================
-# Button to start evaluation
-
-if st.button('Start Evaluation'):
+# Perform evaluation if the range has changed
+if 'evaluate' in st.session_state and st.session_state.evaluate:
+    t0, t1 = st.session_state.frame_range
+    st.session_state.evaluate = False  # Reset the flag
     with st.spinner('Evaluation ongoing for the selected frame range...'):
-        # Directly calling the evaluation function
-        result = run_evaluation(t0 = t0, t1 = t1, SEQ_INFO = video_sequence, uploaded_txt_dir=my_upload.name)
+        result = run_evaluation(t0=t0, t1=t1, SEQ_INFO=video_sequence, uploaded_txt_dir=my_upload.name)
 
-        ### result have the following keys: ['HOTA', 'CLEAR', 'Identity', 'VACE', 'COUNT']
-        tracking_quality = result['HOTA']
-        detection_quality = result['CLEAR']
-        identification_quality = result['Identity']
-        VACE = result['VACE']
-        count = result['COUNT']
-        
-        # Render the charts
-        width_scale = 200
-        width_ratio = [len(tracking_quality), len(detection_quality), len(identification_quality), len(VACE), len(count)]
-        # Display the evaluation results
-        tracking_chart = create_bar_chart(tracking_quality, "Tracking Quality (HOTA)", "#5470C6")
-        detection_chart = create_bar_chart(detection_quality, "Detection Quality (CLEAR)", "#91CC75")
-        identification_chart = create_bar_chart(identification_quality, "Identification Quality (Identity)", "#EE6666")
-        VACE_chart = create_bar_chart(VACE, "VACE", "#fac858")
-        count_chart = create_bar_chart(count, "Count", "#73c0de")
-        
+        # Render and display charts
+        tracking_chart = create_bar_chart(result['HOTA'], "Tracking Quality (HOTA)", "#5470C6")
+        detection_chart = create_bar_chart(result['CLEAR'], "Detection Quality (CLEAR)", "#91CC75")
+        identification_chart = create_bar_chart(result['Identity'], "Identification Quality (Identity)", "#EE6666")
+        VACE_chart = create_bar_chart(result['VACE'], "VACE", "#fac858")
+        count_chart = create_bar_chart(result['COUNT'], "Count", "#73c0de")
+
         components.html(tracking_chart, height=600)
         components.html(detection_chart, height=600)
         components.html(identification_chart, height=600)
         components.html(VACE_chart, height=600)
         components.html(count_chart, height=600)
         
-        # Tell the user the evaluation is done
-        st.success("Evaluation done! You can do new evaluation now.")
+        st.success("Evaluation done! You can select new range to re-evaluate.")
 
 if st.button('Clear Evaluation'):
     # delete the saved file
@@ -116,6 +103,14 @@ if st.button('Clear Evaluation'):
             if file != '.gitignore':
                 os.remove(f'your_model_plot/{file}')
         st.success(f'the txt file uploaded for video sequence {video_sequence} has been deleted')
+
+
+
+
+
+
+
+
 
 
 
