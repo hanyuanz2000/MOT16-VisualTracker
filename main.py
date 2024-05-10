@@ -62,6 +62,9 @@ values = st.slider(
 # Show the range of frames selected
 st.write(f"Start frame: {values[0]}", f", End frame: {values[1]}")
 
+t0 = values[0]
+t1 = values[1]
+
 # ===========================Image Check and Display============================
 # Image check and display
 if image_check(my_upload, MAX_FILE_SIZE):
@@ -69,8 +72,6 @@ if image_check(my_upload, MAX_FILE_SIZE):
 
 # ===========================Evaluation============================
 # Button to start evaluation
-t0 = values[0]
-t1 = values[1]
 
 if st.button('Start Evaluation'):
     with st.spinner('Evaluation ongoing for the selected frame range...'):
